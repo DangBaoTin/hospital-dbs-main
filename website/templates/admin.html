@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <!-- DataTables JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        #contentContainer {
+            overflow-y: auto; /* Enable vertical scrolling for the content container */
+            max-height: calc(100vh - 20px); /* Adjust as needed to leave space for the header */
+        }
+
+        #patientsDataTable {
+            margin-bottom: 0; /* Remove the margin-bottom to fit the content container */
+        }
+
+        #sidebar {
+            position: sticky;
+            top: 0;
+            background-color: #343a40;
+            height: 100vh;
+            padding-top: 20px;
+            overflow-y: auto; /* Enable vertical scrolling for the sidebar */
+        }
+        #sidebar {
+            background-color: #343a40;
+            height: 100vh;
+            padding-top: 20px;
+        }
+
+        #sidebar .nav-link {
+            padding: 10px 20px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #fff;
+        }
+
+        #sidebar .nav-link.active {
+            background-color: #007bff;
+        }
+
+        #addPatientButton {
+            margin-bottom: 20px;
+        }
+
+        #goBackButton {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        #contentContainer {
+            padding-top: 20px; /* Adjust this value as needed */
+        }
+        #searchForm {
+            margin-bottom: 20px; /* Adjust the value as needed */
+        }
+
+        #searchButton {
+            margin-top: 10px;
+            margin-bottom: 20px; /* Add margin at the bottom */
+        }
+        /* Add margin to the patient list table */
+        #filteredPatientsDataTable {
+            margin-top: 20px; /* Adjust the value as needed */
+        }
+        #searchForm {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #searchBar,
+        #input_name,
+        #input_id {
+            padding: 10px; /* Adjust as needed */
+            flex-grow: 1; /* Allow the input to grow and take available space */
+        }
+
+
+        #addPatientButton,
+        .btn-primary,
+        .btn-secondary {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        #addPatientButton:hover,
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            background-color: #0056b3; /* Darker shade on hover */
+        }
+
+        #addPatientButton,
+        #addTreatmentButton,
+        #addExamineButton {
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .btn-add-treatment {
+            background-color: #28a745; /* Green color */
+            color: #fff; /* White text */
+        }
+
+        /* Style for "Add Examine" button */
+        .btn-add-examine {
+            background-color: #007bff; /* Blue color */
+            color: #fff; /* White text */
+        }
+
+        #addTreatmentButton,
+        #addExamineButton {
+            margin-left: 10px; /* Add spacing between buttons */
+        }
+        
+
+        
+
+
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <!-- Go Back Button -->
+                    <button id="goBackButton" type="button" class="btn btn-secondary mb-4" onclick="logout()">
+                        Logout
+                    </button>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#patient_list" onclick="changeTab(this)" data-tabname="Patient List">
+                                <i class="fas fa-user-injured"></i> Patient List
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#search_by_doctor" onclick="changeTab(this)" data-tabname="Search by Doctor">
+                                <i class="fas fa-search"></i> Search by Doctor
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#search_and_export" onclick="changeTab(this)" data-tabname="Search and Export">
+                                <i class="fas fa-file-export"></i> Search and Export
+                            </a>
+                        </li>
+                        <!-- Add more sidebar items as needed -->
+                    </ul>
+                </div>
+            </nav>
+            
+            <!-- Content here -->
+            <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="container" id="contentContainer">
+                    <!-- Content for Patient List 
+                    -->
+                    <div id="patientsTableContent">
+                        <h2 id="patientsTable">Patient List</h2>
+                        <!-- Add Patient Button -->
+                        <div class ="row">
+                            <button id="addPatientButton" type="button" class="btn btn-primary" data-toggle="modal" data-target="#addPatientModal">Add New Patient</button>
+                            <!--
+                            <button id = "addTreatmentButton" class="btn btn-add-treatment btn-success btn-sm" >Add Treatment</button>
+                            <button id = "addExamineButton" class="btn btn-add-examine btn-info btn-sm" >Add Examine</button>
+                            -->
+                        </div>
+                        
+                        <table id="patientsDataTable" class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Phone Number</th>
+                                    <th>Address</th>
+                                    <th>Date of Birth</th>
+                                    <th>Gender</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populate this section with data -->
+                                {% for patient in patients %}
+                                    <tr>
+                                        <td>{{ patient.Code }}</td>
+                                        <td>{{ patient.First_Name }}</td>
+                                        <td>{{ patient.Last_Name }}</td>
+                                        <td>{{ patient.Phone_number }}</td>
+                                        <td>{{ patient.Address }}</td>
+                                        <td>{{ patient.Date_of_Birth }}</td>
+                                        <td>{{ patient.Gender }}</td>
+                                        
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8">No patients found. Error</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Modal to add patient
+                    -->
+                    <div class="modal fade" id="addPatientModal" tabindex="-1" role="dialog" aria-labelledby="addPatientModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                              <div class="modal-header">
+                                  <h5 class="modal-title" id="addPatientModalLabel">Add New Patient</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                  </button>
+                              </div>
+                              <div class="modal-body">
+                                  <!-- Form for adding a new patient -->
+                                  <form id="addPatientForm", action="{{ url_for('actor.add_patient') }}" method="POST">
+                                    <div class="form-group">
+                                        <label for="lastName">Last Name</label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="firstName">First Name</label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="phoneNumber">Phone Number</label>
+                                        <input type="text" class="form-control" id="phoneNumber" name="phoneNumber">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="address">Address</label>
+                                        <input type="text" class="form-control" id="address" name="address">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dateOfBirth">Date of Birth</label>
+                                        <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Gender</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="male" name="gender" value="M">
+                                            <label class="form-check-label" for="male">Male</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="female" name="gender" value="F">
+                                            <label class="form-check-label" for="female">Female</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="password">Password</label>
+                                        <input type="text" class="form-control" id="password" name="password" required>
+                                    </div>
+                                    <!-- Add more input fields as needed -->
+                                
+                                    <!-- Submit button -->
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                </form>
+                                
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+
+
+                    
+                    <!-- Add Examine Modal -->
+                    <div class="modal fade" id="addExamineModal" tabindex="-1" role="dialog" aria-labelledby="addExamineModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addExamineModalLabel">Add Examine Details</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Form to add examine details -->
+                                    <form id="addExamineForm", action = "{{ url_for('actor.add_examine')}}" method = "POST">
+                                        <!-- Input fields for examine details -->
+                                        <div class="form-group">
+                                            <label for="e_patient_code">Patient Code</label>
+                                            <input type="text" class="form-control" id="e_patient_code" name="e_patient_code" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="e_OP_visit">OP_Visit</label>
+                                            <input type="text" class="form-control" id="e_OP_visit" name="e_OP_visit" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="e_doctor_id">Doctor ID</label>
+                                            <input type="text" class="form-control" id="e_doctor_id" name="e_doctor_id" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="e_exam_date">Examine Date</label>
+                                            <input type="date" class="form-control" id="e_exam_date" name="e_exam_date" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="e_next_date">Next Examine Date</label>
+                                            <input type="date" class="form-control" id="e_next_date" name="e_next_date">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="e_diagnosis">Diagnosis</label>
+                                            <input type="text" class="form-control" id="e_diagnosis" name="e_diagnosis" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="e_fee">Examine Fee</label>
+                                            <input type="text" class="form-control" id="e_fee" name="e_fee" required>
+                                        </div>
+
+                                        <!-- Dynamic input fields for medicines will be added here -->
+                                        <div id="medicineInputContainer"></div>
+                                        <!-- Dropdown to select number of medicines -->
+                                        <div class="form-group">
+                                            <label for="medicineCount">Number of Medicines</label>
+                                            <select class="form-control" id="medicineCount">
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                            </select>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <!--<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary" onclick="submitExamineDetails()">Save changes</button> -->
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <!-- end tab 1-->
+
+                    <!--Tab 2-->
+                    <div id="searchByDoctorContent" style="display: none;">
+                        <h2 id="searchByDoctorTable">Search by Doctor</h2>
+                        
+                        <!-- Search Bar Section -->
+                        <div>
+                            <label for="searchByName">Doctor's Name:</label>
+                            <input type="text" id="input_name" class="form-control">
+                        </div>
+                        
+                        <div>
+                            <label for="searchByDoctorID">Doctor's ID:</label>
+                            <input type="text" id="input_id" class="form-control">
+                        </div>
+                        
+
+                        <div class="col-md-12">
+                            <button id="search_by_doctor_button" class="btn btn-primary" type="button" >Search</button>
+                        </div>
+
+                        <!-- Filtered Patient List Section -->
+                        <div id="filteredPatientsList">
+                            <h3>Filtered Patients</h3>
+                            <table id="search_by_doctor_table" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Phone Number</th>
+                                        <th>Address</th>
+                                        <th>Date of Birth</th>
+                                        <th>Gender</th>
+                                       
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Filtered patients will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+    
+                    </div>
+                    <!--end tab 2-->
+
+                    <!-- Tab 3 -->
+                    <div id="searchExportContent" style="display: none;">
+                        <h2 id="searchExportTable">Search and Export</h2>
+                        
+                        <!-- Search Bar Section -->
+                        <div>
+                            <label for="searchByName">PatientID</label>
+                            <input type="text" id="input_patientid" class="form-control">
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <button id="search_by_patient_button" class="btn btn-primary">Search</button>
+                        </div>
+
+                        <div id="filteredPatientsList">
+                            <h3>Treatment</h3>
+                            <table id="treatmentPatientsTable" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>IP_Visit</th>
+                                        <th>Name</th>
+                                        <th>Diagnosis</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Action </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Treatment patients will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="examinePatientsList">
+                            <h3>Examine </h3>
+                            <table id="examinePatientsTable" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>OP_Visit</th>
+                                        <th>Name</th>
+                                        <th>Phone Number</th>
+                                        <th>Exam Date</th>
+                                        <th>Diagnosis</th>
+                                        <th>Action </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Examine patients will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                        
+                    </div>
+
+                    <!-- Report modal-->
+                    <style>
+                        .wide-modal {
+                            width: 100%;
+                        }
+                        .modal::-webkit-scrollbar {
+                            position: fixed;
+                            right: 0;
+                        }
+                    </style>
+
+                    <!--patient_treatment_detail_modal
+                    -->
+                    <div class="modal fade" id="patient_treatment_detail_modal" tabindex="-1" aria-labelledby="patientTreatmentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="patientTreatmentModalLabel">Treatment Details</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <!-- Modal Body -->
+                                <div class="modal-body">
+                                    <form>
+                                        <!-- Patient Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_id">Patient ID:</label>
+                                                <input type="text" id="export_inpatient_id" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_inpatient_IP_visit">IP_Visit:</label>
+                                                <input type="text" id="export_inpatient_IP_visit" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_firstName">First Name:</label>
+                                                <input type="text" id="export_inpatient_firstName" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_inpatient_lastName">Last Name:</label>
+                                                <input type="text" id="export_inpatient_lastName" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Additional Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_phoneNumber">Phone Number:</label>
+                                                <input type="text" id="export_inpatient_phoneNumber" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_inpatient_address">Address:</label>
+                                                <input type="text" id="export_inpatient_address" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Treatment Details -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_Diagnosis">Diagnosis:</label>
+                                                <input type="text" id="export_inpatient_Diagnosis" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_inpatient_Sickroom">Sickroom:</label>
+                                                <input type="text" id="export_inpatient_Sickroom" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_Admission_date">Admission Date:</label>
+                                                <input type="text" id="export_inpatient_Admission_date" class="form-control" readonly>
+                                            </div>     
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_Discharge_date">Discharge Date:</label>
+                                                <input type="text" id="export_inpatient_Discharge_date" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Doctor Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_doctorID">Doctor ID:</label>
+                                                <input type="text" id="export_inpatient_doctorID" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_inpatient_Nurse_ID">Nurse ID:</label>
+                                                <input type="text" id="export_inpatient_Nurse_ID" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Treatment Dates -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_startTreatment">Start Treatment:</label>
+                                                <input type="text" id="export_inpatient_startTreatment" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_inpatient_endTreatment">End Treatment:</label>
+                                                <input type="text" id="export_inpatient_endTreatment" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    
+                                </div>
+                                <!-- Modal Footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--patient_examine_detail_modal
+                    -->
+                    <div class="modal fade" id="patient_examine_detail_modal" tabindex="-1" aria-labelledby="patientExamineModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="patientExamineModalLabel">Examine Details</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <!-- Modal Body -->
+                                <div class="modal-body">
+                                    <form>
+                                        <!-- Patient Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_id">Patient ID:</label>
+                                                <input type="text" id="export_outpatient_id" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_outpatient_OP_visit">OP_Visit:</label>
+                                                <input type="text" id="export_outpatient_OP_visit" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_firstName">First Name:</label>
+                                                <input type="text" id="export_outpatient_firstName" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_outpatient_lastName">Last Name:</label>
+                                                <input type="text" id="export_outpatient_lastName" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Additional Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_phoneNumber">Phone Number:</label>
+                                                <input type="text" id="export_outpatient_phoneNumber" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_outpatient_address">Address:</label>
+                                                <input type="text" id="export_outpatient_address" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Treatment Details -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_Diagnosis">Diagnosis:</label>
+                                                <input type="text" id="export_outpatient_Diagnosis" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_outpatient_doctorID">Doctor ID:</label>
+                                                <input type="text" id="export_outpatient_doctorID" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_Exam_datetime">Examine Date:</label>
+                                                <input type="text" id="export_outpatient_Exam_datetime" class="form-control" readonly>
+                                            </div>     
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_Next_datetime">Next Examine Date:</label>
+                                                <input type="text" id="export_outpatient_Next_datetime" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Doctor Information -->
+      
+                                    </form>
+                                    
+                                </div>
+                                <!-- Modal Footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!--Inpatient Payment Modal
+                    -->
+                    <div class="modal fade" id="exportInpatientPaymentModal" tabindex="-1" aria-labelledby="exportInpatientPaymentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="exportInpatientPaymentModalLabel">Export Total Payment for Treatment</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <!-- Modal Body -->
+                                <div class="modal-body">
+                                    <form>
+                                        <!-- Patient Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="inpatientPaymentName">Name:</label>
+                                                <input type="text" id="inpatientPaymentName" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="inpatientPaymentPatientID">Patient ID:</label>
+                                                <input type="text" id="inpatientPaymentPatientID" class="form-control" readonly>
+                                            </div>
+                                            
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="inpatientPaymentPatientPhone_number">Phone Number:</label>
+                                                <input type="text" id="inpatientPaymentPatientPhone_number" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="inpatientPaymentPatientFee">Treatment Fee:</label>
+                                                <input type="text" id="inpatientPaymentPatientFee" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="inpatientPaymentPatientAdmission_date">Admission Date:</label>
+                                                <input type="text" id="inpatientPaymentPatientAdmission_date" class="form-control" readonly>
+                                            </div>
+                                        </div>
+
+                                        <div id="medicineListContainer">
+                                            <table id="medicineListTable" class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Code</th>
+                                                        <th>Name</th>
+                                                        <th>Price</th>
+                                                        <th>Amount</th>
+                                                        <th>Total Cost</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Medicine items will be added here dynamically -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!--Total cost-->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="inpatientMedicationFee">Total Medicine Fee:</label>
+                                                <input type="text" id="inpatientMedicationFee" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="inpatientTotalFee">Total Fee:</label>
+                                                <input type="text" id="inpatientTotalFee" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Additional Information 
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_phoneNumber">Phone Number:</label>
+                                                <input type="text" id="export_outpatient_phoneNumber" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_outpatient_address">Address:</label>
+                                                <input type="text" id="export_outpatient_address" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_Diagnosis">Diagnosis:</label>
+                                                <input type="text" id="export_outpatient_Diagnosis" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="export_outpatient_doctorID">Doctor ID:</label>
+                                                <input type="text" id="export_outpatient_doctorID" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_Exam_datetime">Examine Date:</label>
+                                                <input type="text" id="export_outpatient_Exam_datetime" class="form-control" readonly>
+                                            </div>     
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="export_outpatient_Next_datetime">Next Examine Date:</label>
+                                                <input type="text" id="export_outpatient_Next_datetime" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        -->
+      
+                                    </form>
+                                    
+                                </div>
+                                <!-- Modal Footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Outpatient Payment Modal
+                    -->
+                    <div class="modal fade" id="exportOutpatientPaymentModal" tabindex="-1" aria-labelledby="exportOutpatientPaymentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="exportOutpatientPaymentModalLabel">Export Total Payment for Examine</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <!-- Modal Body -->
+                                <div class="modal-body">
+                                    <form>
+                                        <!-- Patient Information -->
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="outpatientPaymentName">Name:</label>
+                                                <input type="text" id="outpatientPaymentName" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="outpatientPaymentPatientID">Patient ID:</label>
+                                                <input type="text" id="outpatientPaymentPatientID" class="form-control" readonly>
+                                            </div>
+                                            
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="outpatientPaymentPatientPhone_number">Phone Number:</label>
+                                                <input type="text" id="outpatientPaymentPatientPhone_number" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="outpatientPaymentPatientFee">Examine Fee:</label>
+                                                <input type="text" id="outpatientPaymentPatientFee" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            
+                                            <div class="col">
+                                                <label for="outpatientPaymentPatientExam_date">Examine Date:</label>
+                                                <input type="text" id="outpatientPaymentPatientExam_date" class="form-control" readonly>
+                                            </div>
+                                        </div>
+
+                                        
+                                        <div id="medicineListContainer1">
+                                            <table id="medicineListTable1" class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Code</th>
+                                                        <th>Name</th>
+                                                        <th>Price</th>
+                                                        <th>Amount</th>
+                                                        <th>Total Cost</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        
+                                        <div class="row">
+                                            <div class="col">
+                                                <label for="outpatientMedicationFee">Total Medicine Fee:</label>
+                                                <input type="text" id="outpatientMedicationFee" class="form-control" readonly>
+                                            </div>
+                                            <div class="col">
+                                                <label for="outpatientTotalFee">Total Fee:</label>
+                                                <input type="text" id="outpatientTotalFee" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                       
+                                        
+                                        
+      
+                                    </form>
+                                    
+                                </div>
+                                <!-- Modal Footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    
+    <script>
+      function changeTab(tab) {
+            // Hide all content sections
+            $('#patientsTableContent').hide();
+            $('#addTreatmentContent').hide();
+            $('#addExamineContent').hide();
+            $('#searchExportContent').hide();
+            $('#searchByDoctorContent').hide();
+
+        // Remove 'active' class from all links
+        $('#sidebar .nav-link').removeClass('active');
+
+        // Get the tab name from the data attribute
+        var tabName = $(tab).data('tabname');
+
+        // Show the selected content section
+        if (tabName === "Patient List") {
+            $('#patientsTableContent').show();
+        } else if (tabName === "Search and Export") {
+            $('#searchExportContent').show();
+        } else if (tabName === "Search by Doctor") {
+            $('#searchByDoctorContent').show()
+        }
+
+        // Add 'active' class to the clicked link
+        $(tab).addClass('active');
+
+        // Log the clicked tab for demonstration purposes
+        console.log("Tab clicked: " + tabName);
+    }
+
+        $(document).ready(function () {
+            // Show the modal when the "Add New Patient" button is clicked
+            $('#addPatientButton').click(function () {
+                $('#addPatientModal').modal('show');
+            });
+        });
+
+        $(document).ready(function () {
+            // Show the modal when the "Add New Patient" button is clicked
+            $('#addExamineButton').click(function () {
+                $('#addExamineModal').modal('show');
+            });
+        });
+
+        
+
+        function editPatient(id) {
+            // Implement logic to edit patient information
+            console.log("Edit Patient clicked for ID: " + id);
+        }
+
+        $(document).ready(function () {
+
+            // Show the modal when the "Add New Patient" button is clicked
+            $('#addPatientButton').click(function () {
+                $('#addPatientModal').modal('show');
+            });
+
+
+        });
+
+        $('#medicineCount').change(function() {
+            var count = $(this).val();
+            var container = $('#medicineInputContainer');
+            container.empty(); // Clear previous inputs
+
+            for (var i = 1; i <= count; i++) {
+                container.append('<div class="form-group">' +
+                    '<label for="medicineCode' + i + '">Medicine Code ' + i + '</label>' +
+                    '<input type="text" class="form-control" id="medicineCode' + i + '" name="medicineCode' + i + '">' +
+                    '</div>');
+            }
+        });
+
+        function submitExamineDetails() {
+            // var formData = $('#addExamineForm').serializeArray(); // This gets all form inputs
+            // var medicineData = [];
+
+            // for (var i = 1; i <= $('#medicineCount').val(); i++) {
+            //     medicineData.push({ code: $('#medicineCode' + i).val(), amount: /* Get the amount for each medicine */ });
+            // }
+
+            // // Add medicine data to form data
+            // formData.push({ name: 'medicines', value: JSON.stringify(medicineData) });
+
+            // $.ajax({
+            //     url: '/path_to_server_endpoint', // Replace with your server endpoint
+            //     type: 'POST',
+            //     data: formData,
+            //     success: function(response) {
+            //         // Handle success
+            //         $('#addExamineModal').modal('hide');
+            //     },
+            //     error: function(error) {
+            //         // Handle errors
+            //         console.error('Error submitting examine details:', error);
+            //     }
+            // });
+        }
+
+        //Tab 2
+        //This is for search by doctor
+        $(document).ready(function() {
+            $('#search_by_doctor_button').click(function() {
+                console.log('Search button clicked');
+                var doctorName = $('#input_name').val();
+                var doctorID = $('#input_id').val();
+                
+                // Perform the AJAX GET request
+                $.ajax({
+                    url: '/search_by_doctor',
+                    type: 'GET',
+                    data: {
+                        doctor_name: doctorName,
+                        doctor_id: doctorID
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        // Clear the table before inserting new rows
+                        $('#search_by_doctor_table tbody').empty();
+
+                        // Iterate over the patient_list received from the server
+                        $.each(data, function(index, patient) {
+                            // Create a table row for each patient
+                            var row = $('<tr>').append(
+                                $('<td>').text(patient.id),
+                                $('<td>').text(patient.first_name),
+                                $('<td>').text(patient.last_name),
+                                $('<td>').text(patient.phone_number),
+                                $('<td>').text(patient.address),
+                                $('<td>').text(patient.date_of_birth),
+                                $('<td>').text(patient.gender),
+                                //$('<td>').html('<button class="btn btn-primary" onclick="exportReport(\'' + patient.id + '\')">Export Report</button>')
+
+
+                            );
+                            // Append the row to the table body
+                            $('#search_by_doctor_table tbody').append(row);
+                        });
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // Handle any errors by logging to console or displaying to user
+                        console.log('Error fetching patient list:', textStatus, errorThrown);
+                    }
+                });
+                
+
+            });
+        });
+
+        //This is for search by patient
+        $(document).ready(function() {
+            $('#search_by_patient_button').click(function() {
+                console.log('Search button clicked');
+                var input = $('#input_patientid').val();
+                
+                // Perform the AJAX GET request
+                $.ajax({
+                    url: '/search_by_patient',
+                    type: 'GET',
+                    data: {
+                        input_id: input
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        // Clear the table before inserting new rows
+                        $('#filteredPatientsTable tbody').empty();
+
+                        // Iterate over the patient_list received from the server
+                        $.each(data, function(index, patient) {
+                            // 
+                            var treatmentDetailButton = $('<button>').addClass('btn btn-primary view-inpatient-detail-button').text('View Detail');
+                            treatmentDetailButton.data('patient', patient);
+
+                            // For outpatient details button
+                            var examineDetailButton = $('<button>').addClass('btn btn-primary view-outpatient-detail-button').text('View Detail');
+                            examineDetailButton.data('patient', patient);
+
+                            var inpatientPaymentButton = $('<button>').addClass('btn btn-primary export-inpatient-payment-button').text('Export Payment');
+                            inpatientPaymentButton.data('patient', patient);
+
+                            var outpatientPaymentButton = $('<button>').addClass('btn btn-primary export-outpatient-payment-button').text('Export Payment');
+                            outpatientPaymentButton.data('patient', patient);
+
+                            // Create a table row for each patient
+                            if (patient.treatment_type === "Inpatient") {
+                                // Treatment patients
+                                var treatmentRow = $('<tr>').append(
+                                    $('<td>').text(patient.treatment_detail.IP_visit),
+                                    $('<td>').text(patient.first_name + ' ' + patient.last_name),
+                                    $('<td>').text(patient.treatment_detail.Diagnosis),
+                                    $('<td>').text(patient.treatment_detail.Treatment.Start_datetime),
+                                    $('<td>').text(patient.treatment_detail.Treatment.End_datetime),
+                                    
+                                    $('<td>').append(treatmentDetailButton),
+                                    $('<td>').append(inpatientPaymentButton)
+                                );
+                                $('#treatmentPatientsTable tbody').append(treatmentRow);
+                            } else if (patient.treatment_type === "Outpatient") {
+                                // Examine patients
+                                var examineRow = $('<tr>').append(
+                                    $('<td>').text(patient.treatment_detail.OP_visit),
+                                    $('<td>').text(patient.first_name + ' ' + patient.last_name),
+                                    $('<td>').text(patient.phone_number),
+                                    $('<td>').text(patient.treatment_detail.Examination.Exam_datetime),
+                                    $('<td>').text(patient.treatment_detail.Examination.Diagnosis),
+                                    $('<td>').append(examineDetailButton),
+                                    $('<td>').append(outpatientPaymentButton)
+                                );
+                                $('#examinePatientsTable tbody').append(examineRow);
+                            }
+                        });
+
+                        $(document).on('click', '.view-inpatient-detail-button', function() {
+                            var patientData = $(this).data('patient');
+                            exportInpatientDetail(patientData); // This will call the function for inpatient details
+                        });
+
+                        $(document).on('click', '.view-outpatient-detail-button', function() {
+                            var patientData = $(this).data('patient');
+                            exportOutpatientDetail(patientData); // This will call the function for outpatient details
+                        });
+
+                        $(document).on('click', '.export-inpatient-payment-button', function() {
+                            var patientData = $(this).data('patient');
+                            exportInpatientPayment(patientData);
+                        });
+
+                        $(document).on('click', '.export-outpatient-payment-button', function() {
+                            var patientData = $(this).data('patient');
+                            exportOutpatientPayment(patientData);
+                        });
+
+
+                        
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // Handle any errors by logging to console or displaying to user
+                        console.log('Error fetching patient list:', textStatus, errorThrown);
+                    }
+                });
+
+            });
+        });
+
+        // function attachClickEventListeners() {
+        //     // Attach a click event listener to the buttons after the table is populated
+        //     $('#filteredPatientsTable').on('click', '.view-detail-button', function() {
+        //         var patientData = $(this).data('patient');
+        //         exportOutpatientDetail(patientData);
+        //     });
+        // }
+
+
+        //Tab 3
+        function exportInpatientDetail(patient) {
+            // Assuming 'patient' is an object that contains all the necessary information.
+            // Populate the modal fields with patient information.
+            $('#export_inpatient_id').val(patient.id);
+            $('#export_inpatient_firstName').val(patient.first_name);
+            $('#export_inpatient_lastName').val(patient.last_name);
+            $('#export_inpatient_phoneNumber').val(patient.phone_number);
+            $('#export_inpatient_address').val(patient.address);
+            $('#export_inpatient_date_of_birth').val(patient.date_of_birth);
+            $('#export_inpatient_gender').val(patient.gender);
+
+            $('#export_inpatient_IP_visit').val(patient.treatment_detail.IP_visit);
+            $('#export_inpatient_Diagnosis').val(patient.treatment_detail.Diagnosis);
+            $('#export_inpatient_Admission_date').val(patient.treatment_detail.Admission_date);
+            $('#export_inpatient_Discharge_date').val(patient.treatment_detail.Discharge_date);
+            $('#export_inpatient_Sickroom').val(patient.treatment_detail.Sickroom);
+            $('#export_inpatient_Fee').val(patient.treatment_detail.Fee);
+            $('#export_inpatient_Nurse_ID').val(patient.treatment_detail.Nurse_ID);
+
+            $('#export_inpatient_startTreatment').val(patient.treatment_detail.Treatment.Start_datetime);
+            $('#export_inpatient_endTreatment').val(patient.treatment_detail.Treatment.End_datetime);
+            $('#export_inpatient_doctorID').val(patient.treatment_detail.Treatment.DoctorID);
+
+            // Show the modal.
+            $('#patient_treatment_detail_modal').modal('show');
+        }
+
+        function exportOutpatientDetail(patient) {
+            // Assuming 'patient' is an object that contains all the necessary information.
+            // Populate the modal fields with patient information.
+            $('#export_outpatient_id').val(patient.id);
+            $('#export_outpatient_firstName').val(patient.first_name);
+            $('#export_outpatient_lastName').val(patient.last_name);
+            $('#export_outpatient_phoneNumber').val(patient.phone_number);
+            $('#export_outpatient_address').val(patient.address);
+            $('#export_outpatient_date_of_birth').val(patient.date_of_birth);
+            $('#export_outpatient_gender').val(patient.gender);
+
+            $('#export_outpatient_OP_visit').val(patient.treatment_detail.OP_visit);
+     
+       
+
+            $('#export_outpatient_Exam_datetime').val(patient.treatment_detail.Examination.Exam_datetime);
+            $('#export_outpatient_Next_datetime').val(patient.treatment_detail.Examination.Next_datetime);
+            $('#export_outpatient_doctorID').val(patient.treatment_detail.Examination.DoctorID);
+            $('#export_outpatient_Diagnosis').val(patient.treatment_detail.Examination.Diagnosis);
+            $('#export_outpatient_Fee').val(patient.treatment_detail.Examination.Fee);
+
+            // Show the modal.
+            $('#patient_examine_detail_modal').modal('show');
+        }
+
+        function exportInpatientPayment(patientData){
+            $.ajax({
+                url: '/export_inpatient_payment',
+                type: 'GET',
+                data: {
+                    patient_id: patientData.id,
+                    ip_visit: patientData.treatment_detail.IP_visit,
+                    start_date: patientData.treatment_detail.Treatment.Start_datetime,
+                    end_date: patientData.treatment_detail.Treatment.End_datetime,
+                    doctor_id: patientData.treatment_detail.Treatment.DoctorID,
+                    treatment_fee: patientData.treatment_detail.Fee
+                },
+                success: function(response) {
+                    // Now populate the payment modal with the response data
+                    $('#inpatientPaymentName').val(patientData.first_name + ' ' + patientData.last_name);
+                    $('#inpatientPaymentPatientID').val(patientData.id);
+                    $('#inpatientPaymentPatientPhone_number').val(patientData.phone_number);
+                    $('#inpatientPaymentPatientAdmission_date').val(patientData.treatment_detail.Admission_date);
+                    $('#inpatientPaymentPatientFee').val(patientData.treatment_detail.Fee);
+                    
+
+                    // 
+                    var $medicineListTable = $('#medicineListTable tbody');
+                    $medicineListTable.empty();
+
+                    // Dynamically create and append each medicine item to the table
+                    response.medicine_list.forEach(function(medicine) {
+                        var medicineRow = $('<tr>').append(
+                            $('<td>').text(medicine.code),
+                            $('<td>').text(medicine.name),
+                            $('<td>').text(medicine.medication_price.toFixed(2)),
+                            $('<td>').text(medicine.amount),
+                            $('<td>').text( medicine.total_cost.toFixed(2))
+                        );
+                        $medicineListTable.append(medicineRow);
+                    });
+                    
+                    $('#inpatientMedicationFee').val( response.total_med_price);
+                    $('#inpatientTotalFee').val(response.total_cost);
+
+                    // Show the payment modal
+                    $('#exportInpatientPaymentModal').modal('show');
+                },
+                error: function(error) {
+                    console.error('Error fetching payment details:', error);
+                    alert('Could not fetch payment details.');
+                }
+            });
+        }
+
+        function exportOutpatientPayment(patientData){
+            $.ajax({
+                url: '/export_outpatient_payment',
+                type: 'GET',
+                data: {
+                    patient_id: patientData.id,
+                    op_visit: patientData.treatment_detail.OP_visit,
+                    exam_date: patientData.treatment_detail.Examination.Exam_datetime,
+                    doctor_id: patientData.treatment_detail.Examination.DoctorID,
+                    examine_fee: patientData.treatment_detail.Examination.Fee
+                },
+                success: function(response) {
+                    // Now populate the payment modal with the response data
+                    $('#outpatientPaymentName').val(patientData.first_name + ' ' + patientData.last_name);
+                    $('#outpatientPaymentPatientID').val(patientData.id);
+                    $('#outpatientPaymentPatientPhone_number').val(patientData.phone_number);
+                    $('#outpatientPaymentPatientExam_date').val(patientData.treatment_detail.Examination.Exam_datetime);
+                    $('#outpatientPaymentPatientFee').val(patientData.treatment_detail.Examination.Fee);
+                    
+
+                    
+                    var $medicineListTable1 = $('#medicineListTable1 tbody');
+                    $medicineListTable1.empty();
+
+                    // Dynamically create and append each medicine item to the table
+                    response.medicine_list.forEach(function(medicine) {
+                        var medicineRow = $('<tr>').append(
+                            $('<td>').text(medicine.code),
+                            $('<td>').text(medicine.name),
+                            $('<td>').text(medicine.medication_price.toFixed(2)),
+                            $('<td>').text(medicine.amount),
+                            $('<td>').text(medicine.total_cost.toFixed(2))
+                        );
+                        $medicineListTable1.append(medicineRow);
+                    });
+                    
+                    $('#outpatientMedicationFee').val( response.total_med_price);
+                    $('#outpatientTotalFee').val(response.total_cost);
+
+                    // Show the payment modal
+                    $('#exportOutpatientPaymentModal').modal('show');
+                },
+                error: function(error) {
+                    console.error('Error fetching payment details:', error);
+                    alert('Could not fetch payment details.');
+                }
+            });
+        }
+        
+        function logout() {
+            // Show a confirmation dialog to the user
+            var confirmLogout = confirm("Are you sure you want to log out?");
+            
+            if (confirmLogout) {
+                // Perform logout tasks here, such as clearing session data
+
+                // Redirect the user to the login page
+                window.location.href = "/";
+            }
+        }
+    </script> 
+    
+</body>
+
+</html>
